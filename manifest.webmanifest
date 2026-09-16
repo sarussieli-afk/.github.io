@@ -1,0 +1,9 @@
+{
+  "name": "Drone Live",
+  "short_name": "Drone Live",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "description": "One-tap DJI to YouTube Live control"
+}
