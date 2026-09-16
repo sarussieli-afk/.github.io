@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#050505">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Drone Live">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>Drone Live</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;width:100%;min-height:100%;background:#050505;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,Arial,sans-serif}
+    body{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top)) 22px max(28px,env(safe-area-inset-bottom))}
+    .app{width:100%;max-width:520px;text-align:center}
+    .brand{font-size:14px;letter-spacing:.18em;text-transform:uppercase;color:#707070;font-weight:700;margin-bottom:12px}
+    h1{font-size:clamp(40px,12vw,64px);line-height:.95;letter-spacing:-.055em;margin:0 0 14px;font-weight:800}
+    .status{min-height:44px;color:#8b8b8b;font-size:15px;line-height:1.45;margin:0 auto 30px;max-width:420px}
+    #goLive{width:100%;min-height:150px;border:0;border-radius:30px;background:#ff163f;color:#fff;font-size:clamp(32px,10vw,52px);font-weight:900;letter-spacing:-.035em;cursor:pointer;box-shadow:0 0 70px rgba(255,22,63,.28),inset 0 -2px 0 rgba(0,0,0,.24);transition:transform .12s ease,background .2s ease,box-shadow .2s ease}
+    #goLive:active{transform:scale(.975)}
+    #goLive:disabled{opacity:.58;cursor:default}
+    #goLive.live{background:#17c873;box-shadow:0 0 70px rgba(23,200,115,.28)}
+    .foot{margin-top:26px;color:#434343;font-size:12px}
+    .setup{display:none;margin-top:18px;color:#ffb84d;font-size:12px;line-height:1.45}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="brand">DJI → YouTube</div>
+    <h1>Drone Live</h1>
+    <div id="status" class="status">Ready</div>
+    <button id="goLive">GO LIVE</button>
+    <div id="setup" class="setup">OAuth Client ID is not configured yet.</div>
+    <div class="foot">One tap to transition your waiting YouTube broadcast to LIVE</div>
+  </main>
+
+<script>
+const CLIENT_ID = "PASTE_GOOGLE_OAUTH_CLIENT_ID_HERE";
+const SCOPE = "https://www.googleapis.com/auth/youtube";
+let tokenClient = null;
+let accessToken = null;
+
+const button = document.getElementById("goLive");
+const statusEl = document.getElementById("status");
+const setupEl = document.getElementById("setup");
+
+function setStatus(text){ statusEl.textContent = text; }
+function fail(text){ setStatus("⚠ " + text); button.disabled = false; }
+function configured(){ return CLIENT_ID && !CLIENT_ID.includes("PASTE_GOOGLE_OAUTH_CLIENT_ID_HERE"); }
+
+window.addEventListener("load",()=>{
+  if(!configured()){
+    setStatus("Needs your Google OAuth Client ID once");
+    setupEl.style.display="block";
+    button.disabled=true;
+    return;
+  }
+  const wait=setInterval(()=>{
+    if(window.google?.accounts?.oauth2){
+      clearInterval(wait);
+      tokenClient=google.accounts.oauth2.initTokenClient({
+        client_id:CLIENT_ID,
+        scope:SCOPE,
+        callback:async response=>{
+          if(response.error){ fail("Google sign-in failed"); return; }
+          accessToken=response.access_token;
+          await startLive();
+        },
+        error_callback:()=>fail("Google sign-in was cancelled")
+      });
+    }
+  },100);
+});
+
+button.addEventListener("click",()=>{
+  if(!tokenClient){ fail("Google login is not ready"); return; }
+  button.disabled=true;
+  setStatus("Connecting to YouTube…");
+  tokenClient.requestAccessToken({prompt:""});
+});
+
+async function api(url,options={}){
+  const response=await fetch(url,{...options,headers:{Authorization:`Bearer ${accessToken}`,"Content-Type":"application/json",...(options.headers||{})}});
+  let data={};
+  try{data=await response.json();}catch(_){ }
+  if(!response.ok) throw new Error(data?.error?.message || `YouTube error ${response.status}`);
+  return data;
+}
+
+async function startLive(){
+  try{
+    setStatus("Finding waiting broadcast…");
+    const list=await api("https://www.googleapis.com/youtube/v3/liveBroadcasts?part=id,snippet,status,contentDetails&broadcastStatus=upcoming&broadcastType=all&mine=true&maxResults=50");
+    const broadcasts=(list.items||[]).filter(x=>x.contentDetails?.boundStreamId);
+    if(!broadcasts.length) throw new Error("No waiting broadcast with a bound stream was found");
+
+    broadcasts.sort((a,b)=>new Date(a.snippet?.scheduledStartTime||0)-new Date(b.snippet?.scheduledStartTime||0));
+    const broadcast=broadcasts[0];
+    const streamId=broadcast.contentDetails.boundStreamId;
+
+    setStatus("Checking DJI signal…");
+    const streams=await api("https://www.googleapis.com/youtube/v3/liveStreams?part=id,status&id="+encodeURIComponent(streamId));
+    const streamStatus=streams.items?.[0]?.status?.streamStatus;
+    if(streamStatus!=="active") throw new Error("DJI signal not detected yet");
+
+    setStatus("Starting LIVE…");
+    const params=new URLSearchParams({part:"id,status",id:broadcast.id,broadcastStatus:"live"});
+    await api("https://www.googleapis.com/youtube/v3/liveBroadcasts/transition?"+params.toString(),{method:"POST"});
+
+    button.classList.add("live");
+    button.textContent="● LIVE";
+    button.disabled=true;
+    setStatus((broadcast.snippet?.title||"Broadcast")+" is LIVE");
+  }catch(err){
+    console.error(err);
+    fail(err.message||"Unable to start live broadcast");
+  }
+}
+</script>
+</body>
+</html>
