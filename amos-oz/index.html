@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>הקמת בית ספר עמוס עוז</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07111f;
+    --bg2: #0d1d33;
+    --gold: #f3dd98;
+    --gold-deep: #d9bb68;
+    --white: #ffffff;
+    --line: rgba(120, 150, 170, .28);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+  body { display: grid; place-items: center; font-family: "Heebo", sans-serif; }
+
+  /* 1920x1080 stage, scaled to fit the window */
+  .stage {
+    position: absolute; left: 50%; top: 50%;
+    width: 1920px; height: 1080px;
+    transform: translate(-50%, -50%) scale(var(--s, 1));
+    overflow: hidden;
+    background: radial-gradient(ellipse 80% 70% at 50% 45%, var(--bg2) 0%, var(--bg) 70%, #040a14 100%);
+    cursor: pointer;
+  }
+  .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(90,130,170,.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(90,130,170,.07) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, #000 30%, transparent 85%);
+    opacity: 0;
+  }
+  .vignette { position: absolute; inset: 0; box-shadow: inset 0 0 260px 60px rgba(0,0,0,.65); pointer-events: none; }
+
+  svg.blueprint { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+  .blueprint .draw { fill: none; stroke: var(--line); stroke-width: 2; }
+  .blueprint .faint { fill: none; stroke: rgba(120,150,170,.12); stroke-width: 2; }
+  .blueprint .top { stroke: rgba(160,180,150,.35); }
+  .blueprint .corner { fill: none; stroke: var(--gold-deep); stroke-width: 3; opacity: .85; }
+
+  .logo {
+    position: absolute; left: 770px; top: 55px; width: 380px; height: 205px;
+  }
+  .logo img { width: 100%; height: 100%; display: block; }
+
+  .title-block { position: absolute; right: 180px; top: 355px; width: 900px; text-align: right; }
+  .kicker {
+    font-weight: 900; font-size: 74px; line-height: 1; color: var(--gold);
+    letter-spacing: 1px; overflow: hidden; padding-bottom: 6px;
+  }
+  .kicker span { display: inline-block; }
+  .rule {
+    height: 3px; width: 560px; margin: 8px 0 0 auto;
+    background: linear-gradient(to left, var(--gold), var(--gold-deep));
+    transform-origin: right center; transform: scaleX(0);
+    box-shadow: 0 0 12px rgba(243,221,152,.5);
+  }
+  .name {
+    margin-top: 28px;
+    font-weight: 900; font-size: 190px; line-height: 1; color: var(--white);
+    white-space: nowrap; letter-spacing: -2px;
+  }
+  .name .ch { display: inline-block; will-change: transform, opacity, filter; }
+  .name.glow { text-shadow: 0 0 18px rgba(255,255,255,.55), 0 0 60px rgba(160,200,255,.25); transition: text-shadow 1s ease; }
+  .place {
+    margin-top: 26px; font-weight: 900; font-size: 64px; line-height: 1; color: var(--gold);
+    clip-path: inset(0 0 0 100%);
+  }
+
+  .credits { position: absolute; font-size: 32px; color: #fff; white-space: nowrap; }
+  .credits b { font-weight: 800; }
+  .credits .en { font-weight: 800; font-style: italic; letter-spacing: .5px; }
+  .credits .line { display: block; overflow: hidden; line-height: 1.4; }
+  .credits .line > span { display: inline-block; transform: translateY(110%); }
+  .credits.right { right: 175px; top: 920px; text-align: right; }
+  .credits.left  { right: 1295px; top: 965px; text-align: right; }
+
+  .shine {
+    position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.08) 50%, transparent 60%);
+    transform: translateX(-120%);
+  }
+
+  .hint {
+    position: fixed; bottom: 14px; left: 16px; color: rgba(255,255,255,.4);
+    font: 500 14px "Heebo", sans-serif; opacity: 0; transition: opacity .6s; pointer-events: none;
+  }
+  .hint.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="grid" id="grid"></div>
+
+  <svg class="blueprint" viewBox="0 0 1920 1080" aria-hidden="true">
+    <!-- floor plan -->
+    <g id="plan">
+      <path class="draw top" d="M87 232 V258 M87 245 H790 M790 232 V258"/>
+      <path class="draw" d="M87 292 H790 V820 H613 V688 H87 Z"/>
+      <path class="draw" d="M394 292 V467"/>
+      <path class="draw" d="M613 292 V688 H790"/>
+      <path class="draw" d="M87 467 H360 M394 467 H613"/>
+      <path class="draw" d="M262 467 V688"/>
+      <path class="draw" d="M360 467 A34 34 0 0 1 394 433"/>
+    </g>
+    <!-- faint spec table on the right -->
+    <g id="table">
+      <path class="faint" d="M1345 130 H1555 V330 H1345 Z"/>
+      <path class="faint" d="M1345 158 H1555 M1345 186 H1555 M1345 214 H1555 M1345 242 H1555 M1345 270 H1555 M1345 298 H1555"/>
+    </g>
+    <!-- corner brackets -->
+    <g id="corners">
+      <path class="corner" d="M28 80 V28 H80"/>
+      <path class="corner" d="M1840 28 H1892 V80"/>
+      <path class="corner" d="M28 1000 V1052 H80"/>
+      <path class="corner" d="M1840 1052 H1892 V1000"/>
+    </g>
+  </svg>
+
+  <div class="logo" id="logo"><img src="logo.png" alt="עיריית תל אביב-יפו · עזרה ובצרון"></div>
+
+  <div class="title-block">
+    <div class="kicker" id="kicker"><span>הקמת בית ספר</span></div>
+    <div class="rule" id="rule"></div>
+    <div class="name" id="name">עמוס עוז</div>
+    <div class="place" id="place">בשדה דב</div>
+  </div>
+
+  <div class="credits right" id="creditsR">
+    <span class="line"><span>חברת ניהול: <span class="en" dir="ltr">BDO OPEX</span></span></span>
+    <span class="line"><span>קבלן מבצע: <b>שלמה אזולאי ובניו בע"מ</b></span></span>
+  </div>
+  <div class="credits left" id="creditsL">
+    <span class="line"><span><b>צילום ועריכה:</b> דורון סהר וגילי חן</span></span>
+  </div>
+
+  <div class="shine" id="shine"></div>
+  <div class="vignette"></div>
+</div>
+<div class="hint" id="hint">לחצו להפעלה מחדש</div>
+
+<script>
+  // Fit the fixed 1920x1080 stage into the window
+  const stage = document.getElementById('stage');
+  function fit() {
+    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    stage.style.setProperty('--s', s);
+  }
+  addEventListener('resize', fit); fit();
+
+  // Split the main name into per-letter spans
+  const nameEl = document.getElementById('name');
+  const nameText = nameEl.textContent;
+  nameEl.innerHTML = [...nameText].map(c =>
+    c === ' ' ? '<span class="ch">&nbsp;</span>' : `<span class="ch">${c}</span>`).join('');
+
+  const $ = id => document.getElementById(id);
+  const ease = 'cubic-bezier(.2,.8,.2,1)';
+  const easeBack = 'cubic-bezier(.34,1.56,.64,1)';
+  let running = [];
+
+  function anim(el, frames, opts) {
+    const a = el.animate(frames, { fill: 'both', easing: ease, ...opts });
+    running.push(a);
+    return a;
+  }
+
+  function prepStroke(path) {
+    const len = path.getTotalLength();
+    path.style.strokeDasharray = len;
+    path.style.strokeDashoffset = len;
+    return len;
+  }
+
+  function play() {
+    running.forEach(a => a.cancel());
+    running = [];
+    $('hint').classList.remove('show');
+    nameEl.classList.remove('glow');
+
+    // 0.0s  background grid
+    anim($('grid'), [{ opacity: 0 }, { opacity: 1 }], { duration: 1400 });
+
+    // 0.1s  corner brackets
+    document.querySelectorAll('#corners path').forEach((p, i) => {
+      const len = prepStroke(p);
+      anim(p, [{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: 700, delay: 100 + i * 90 });
+    });
+
+    // 0.3s  blueprint lines draw in
+    document.querySelectorAll('#plan path, #table path').forEach((p, i) => {
+      const len = prepStroke(p);
+      anim(p, [{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
+        { duration: 1600, delay: 300 + i * 140, easing: 'cubic-bezier(.65,0,.35,1)' });
+    });
+
+    // 0.6s  logo
+    anim($('logo'), [
+      { opacity: 0, transform: 'scale(.85) rotate(-4deg)', filter: 'blur(12px)' },
+      { opacity: 1, transform: 'scale(1) rotate(0)', filter: 'blur(0)' }
+    ], { duration: 1200, delay: 600 });
+
+    // 1.4s  "הקמת בית ספר" rises from a mask
+    anim($('kicker').firstElementChild, [
+      { transform: 'translateY(105%)', opacity: 0 },
+      { transform: 'translateY(0)', opacity: 1 }
+    ], { duration: 800, delay: 1400 });
+
+    // 1.8s  gold rule draws right-to-left
+    anim($('rule'), [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }],
+      { duration: 900, delay: 1800, easing: 'cubic-bezier(.65,0,.35,1)' });
+
+    // 2.3s  "עמוס עוז" builds letter by letter (Hebrew reads right→left, so DOM order)
+    const chars = nameEl.querySelectorAll('.ch');
+    chars.forEach((ch, i) => {
+      anim(ch, [
+        { opacity: 0, transform: 'translateY(-70px) scale(1.35)', filter: 'blur(14px)' },
+        { opacity: 1, transform: 'translateY(0) scale(1)', filter: 'blur(0)' }
+      ], { duration: 750, delay: 2300 + i * 110, easing: easeBack });
+    });
+    const nameDone = 2300 + chars.length * 110 + 500;
+    setTimer(() => nameEl.classList.add('glow'), nameDone);
+
+    // name settles with a gentle pulse
+    anim(nameEl, [
+      { transform: 'scale(1)' }, { transform: 'scale(1.03)' }, { transform: 'scale(1)' }
+    ], { duration: 700, delay: nameDone, easing: 'ease-in-out', fill: 'none' });
+
+    // "בשדה דב" wipes in from the right
+    anim($('place'), [
+      { clipPath: 'inset(0 0 0 100%)', transform: 'translateX(-20px)' },
+      { clipPath: 'inset(0 0 0 0%)', transform: 'translateX(0)' }
+    ], { duration: 800, delay: nameDone - 150 });
+
+    // credits slide up line by line
+    const lines = [...document.querySelectorAll('#creditsR .line > span, #creditsL .line > span')];
+    lines.forEach((l, i) => {
+      anim(l, [{ transform: 'translateY(110%)' }, { transform: 'translateY(0)' }],
+        { duration: 700, delay: nameDone + 500 + i * 220 });
+    });
+
+    // final light sweep across the slide
+    const end = nameDone + 500 + lines.length * 220 + 500;
+    anim($('shine'), [{ transform: 'translateX(-120%)' }, { transform: 'translateX(120%)' }],
+      { duration: 1600, delay: end, easing: 'ease-in-out' });
+
+    setTimer(() => $('hint').classList.add('show'), end + 1800);
+  }
+
+  let timers = [];
+  function setTimer(fn, ms) { timers.push(setTimeout(fn, ms)); }
+  function replay() { timers.forEach(clearTimeout); timers = []; play(); }
+
+  stage.addEventListener('click', replay);
+  addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') replay(); });
+
+  // Wait for the font so letters don't jump mid-animation
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(play);
+</script>
+</body>
+</html>
