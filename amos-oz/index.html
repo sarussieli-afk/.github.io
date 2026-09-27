@@ -4,10 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>הקמת בית ספר עמוס עוז</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
+  @font-face { font-family: "Heebo"; font-weight: 400; font-display: block; src: url(fonts/heebo-hebrew-400-normal.woff2) format("woff2"); unicode-range: U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F; }
+  @font-face { font-family: "Heebo"; font-weight: 400; font-display: block; src: url(fonts/heebo-latin-400-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+2000-206F; }
+  @font-face { font-family: "Heebo"; font-weight: 800; font-display: block; src: url(fonts/heebo-hebrew-800-normal.woff2) format("woff2"); unicode-range: U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F; }
+  @font-face { font-family: "Heebo"; font-weight: 800; font-display: block; src: url(fonts/heebo-latin-800-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+2000-206F; }
+  @font-face { font-family: "Heebo"; font-weight: 900; font-display: block; src: url(fonts/heebo-hebrew-900-normal.woff2) format("woff2"); unicode-range: U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F; }
+  @font-face { font-family: "Heebo"; font-weight: 900; font-display: block; src: url(fonts/heebo-latin-900-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+2000-206F; }
   :root {
     --bg: #07111f;
     --bg2: #0d1d33;
@@ -69,7 +72,6 @@
     white-space: nowrap; letter-spacing: -2px;
   }
   .name .ch { display: inline-block; will-change: transform, opacity, filter; }
-  .name.glow { text-shadow: 0 0 18px rgba(255,255,255,.55), 0 0 60px rgba(160,200,255,.25); transition: text-shadow 1s ease; }
   .place {
     margin-top: 26px; font-weight: 900; font-size: 64px; line-height: 1; color: var(--gold);
     clip-path: inset(0 0 0 100%);
@@ -91,7 +93,7 @@
 
   .hint {
     position: fixed; bottom: 14px; left: 16px; color: rgba(255,255,255,.4);
-    font: 500 14px "Heebo", sans-serif; opacity: 0; transition: opacity .6s; pointer-events: none;
+    font: 400 14px "Heebo", sans-serif; opacity: 0; transition: opacity .6s; pointer-events: none;
   }
   .hint.show { opacity: 1; }
 </style>
@@ -166,6 +168,7 @@
   const ease = 'cubic-bezier(.2,.8,.2,1)';
   const easeBack = 'cubic-bezier(.34,1.56,.64,1)';
   let running = [];
+  const RENDER = new URLSearchParams(location.search).has('render');
 
   function anim(el, frames, opts) {
     const a = el.animate(frames, { fill: 'both', easing: ease, ...opts });
@@ -184,7 +187,6 @@
     running.forEach(a => a.cancel());
     running = [];
     $('hint').classList.remove('show');
-    nameEl.classList.remove('glow');
 
     // 0.0s  background grid
     anim($('grid'), [{ opacity: 0 }, { opacity: 1 }], { duration: 1400 });
@@ -227,7 +229,10 @@
       ], { duration: 750, delay: 2300 + i * 110, easing: easeBack });
     });
     const nameDone = 2300 + chars.length * 110 + 500;
-    setTimer(() => nameEl.classList.add('glow'), nameDone);
+    anim(nameEl, [
+      { textShadow: '0 0 0 rgba(255,255,255,0), 0 0 0 rgba(160,200,255,0)' },
+      { textShadow: '0 0 18px rgba(255,255,255,.55), 0 0 60px rgba(160,200,255,.25)' }
+    ], { duration: 1000, delay: nameDone, easing: 'ease' });
 
     // name settles with a gentle pulse
     anim(nameEl, [
@@ -252,7 +257,8 @@
     anim($('shine'), [{ transform: 'translateX(-120%)' }, { transform: 'translateX(120%)' }],
       { duration: 1600, delay: end, easing: 'ease-in-out' });
 
-    setTimer(() => $('hint').classList.add('show'), end + 1800);
+    if (!RENDER) setTimer(() => $('hint').classList.add('show'), end + 1800);
+    return end + 1600;
   }
 
   let timers = [];
@@ -262,8 +268,16 @@
   stage.addEventListener('click', replay);
   addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') replay(); });
 
-  // Wait for the font so letters don't jump mid-animation
-  (document.fonts ? document.fonts.ready : Promise.resolve()).then(play);
+  // ?render → paused timeline driven frame by frame via window.seek(ms) (used for video export)
+  const fontsReady = document.fonts ? document.fonts.load('900 10px Heebo', 'אב').then(() => document.fonts.ready) : Promise.resolve();
+  fontsReady.then(() => {
+    if (!RENDER) return play();
+    window.duration = play();
+    running.forEach(a => a.pause());
+    window.seek = ms => running.forEach(a => { a.currentTime = ms; });
+    window.seek(0);
+    window.ready = true;
+  });
 </script>
 </body>
 </html>
