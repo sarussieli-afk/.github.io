@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>כיכר המדינה · 6 גרסאות</title>
+<title>כיכר המדינה · 12 גרסאות</title>
 <link rel="stylesheet" href="fonts.css">
 <style>
   :root {
@@ -118,10 +118,83 @@
   .v6 .cr b { position: static; font-weight: 400; color: var(--gold); }
   .v6 .cr-r { right: 150px; }
   .v6 .cr-l { left: 150px; }
+
+  /* ───────── 7 · Bottom-anchored serif ───────── */
+  .v7 .glow { right: -150px; top: -200px; }
+  .v7 .logo { right: 110px; top: 80px; width: 320px; }
+  .v7 .credits { left: 110px; top: 95px; font: 300 26px/1.75 "Heebo"; }
+  .v7 .credits b { font-weight: 500; color: var(--gold); }
+  .v7 .rule { left: 110px; right: 110px; top: 700px; height: 1px; background: var(--gold-deep); }
+  .v7 .kick { right: 110px; top: 725px; font: 400 58px "Bellefair"; color: var(--gold); letter-spacing: 3px; }
+  .v7 .name { right: 100px; bottom: 30px; font: 400 290px/1 "Bellefair"; white-space: nowrap; letter-spacing: -3px; }
+
+  /* ───────── 8 · Gold band ───────── */
+  .v8 .glow { left: 510px; top: -220px; }
+  .v8 .logo { left: 830px; top: 60px; width: 260px; }
+  .v8 .kick { left: 0; right: 0; top: 330px; text-align: center; font: 300 58px "Heebo"; letter-spacing: 12px; }
+  .v8 .band { left: 0; right: 0; top: 430px; height: 280px; background: linear-gradient(90deg, var(--gold-deep), var(--gold) 50%, var(--gold-deep)); box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+  .v8 .name { left: 0; right: 0; top: 430px; height: 280px; text-align: center; font: 900 240px/280px "Heebo"; color: var(--navy); letter-spacing: -4px; }
+  .v8 .credits { left: 160px; right: 160px; top: 800px; display: flex; justify-content: space-between; text-align: center; }
+  .v8 .credits div { flex: 1; }
+  .v8 .credits b { display: block; font: 500 24px "Heebo"; color: var(--gold); margin-bottom: 4px; }
+  .v8 .credits span { font: 300 30px "Heebo"; }
+
+  /* ───────── 9 · Ring ───────── */
+  .v9 .ring { left: 150px; top: 170px; width: 740px; height: 740px; border-radius: 50%; border: 3px solid var(--gold); }
+  .v9 .ring2 { left: 195px; top: 215px; width: 650px; height: 650px; border-radius: 50%; border: 1px solid rgba(243,221,152,.35); }
+  .v9 .glow { left: 70px; top: 280px; }
+  .v9 .logo { left: 300px; top: 425px; width: 440px; }
+  .v9 .kick { right: 140px; top: 250px; font: 400 56px "Varela Round"; color: var(--gold); }
+  .v9 .name { right: 130px; top: 330px; font: 400 200px/1.02 "Varela Round"; text-align: right; }
+  .v9 .credits { right: 140px; top: 800px; font: 400 26px/1.7 "Varela Round"; text-align: right; }
+  .v9 .credits b { font-weight: 400; color: var(--gold); }
+
+  /* ───────── 10 · Book cover ───────── */
+  .v10 .f1 { inset: 46px; border: 2px solid var(--gold-deep); }
+  .v10 .f2 { inset: 62px; border: 1px solid rgba(243,221,152,.4); }
+  .v10 .glow { left: 510px; top: -170px; }
+  .v10 .logo { left: 830px; top: 110px; width: 260px; }
+  .v10 .kick { left: 0; right: 0; top: 330px; text-align: center; font: 400 44px "David Libre"; color: var(--gold); letter-spacing: 14px; }
+  .v10 .name { left: 0; right: 0; top: 390px; text-align: center; font: 800 210px/1.1 "Noto Serif Hebrew"; }
+  .v10 .orn { left: 0; right: 0; top: 670px; display: flex; justify-content: center; align-items: center; gap: 18px; }
+  .v10 .orn i { display: block; width: 120px; height: 1px; background: var(--gold-deep); }
+  .v10 .orn em { display: block; width: 14px; height: 14px; background: var(--gold); transform: rotate(45deg); }
+  .v10 .credits { left: 0; right: 0; top: 730px; text-align: center; font: 400 30px/1.65 "David Libre"; }
+  .v10 .credits b { font-weight: 700; color: var(--gold); }
+
+  /* ───────── 11 · Swiss grid ───────── */
+  .v11 .gl { background: rgba(243,221,152,.2); }
+  .v11 .gx1 { left: 640px; top: 0; bottom: 0; width: 1px; }
+  .v11 .gx2 { left: 1280px; top: 0; bottom: 0; width: 1px; }
+  .v11 .gy1 { left: 0; right: 0; top: 360px; height: 1px; }
+  .v11 .gy2 { left: 0; right: 0; top: 720px; height: 1px; }
+  .v11 .dot { width: 11px; height: 11px; background: var(--gold); }
+  .v11 .d1 { left: 635px; top: 355px; } .v11 .d2 { left: 1275px; top: 355px; }
+  .v11 .d3 { left: 635px; top: 715px; } .v11 .d4 { left: 1275px; top: 715px; }
+  .v11 .glow { left: -130px; top: -80px; }
+  .v11 .logo { left: 150px; top: 80px; width: 340px; }
+  .v11 .kick { right: 60px; top: 245px; font: 700 70px "Miriam Libre"; color: var(--gold); }
+  .v11 .name { right: 50px; top: 405px; font: 700 228px/1.1 "Miriam Libre"; white-space: nowrap; letter-spacing: -4px; }
+  .v11 .cell { top: 770px; width: 540px; text-align: right; }
+  .v11 .cell b { display: block; font: 700 24px "Miriam Libre"; color: var(--gold); margin-bottom: 8px; }
+  .v11 .cell span { font: 400 30px/1.3 "Miriam Libre"; }
+  .v11 .c1 { right: 60px; } .v11 .c2 { right: 700px; } .v11 .c3 { right: 1340px; }
+
+  /* ───────── 12 · Vertical kicker ───────── */
+  .v12 .strip { right: 0; top: 0; bottom: 0; width: 170px; background: linear-gradient(var(--gold), var(--gold-deep)); }
+  .v12 .kick { right: 0; top: 0; bottom: 0; width: 170px; display: flex; align-items: center; justify-content: center;
+    writing-mode: vertical-rl; font: 900 72px "Noto Sans Hebrew"; color: var(--navy); letter-spacing: 6px; }
+  .v12 .glow { left: -150px; top: -160px; }
+  .v12 .logo { left: 130px; top: 90px; width: 330px; }
+  .v12 .name { right: 270px; top: 330px; font: 900 240px/1.05 "Noto Sans Hebrew"; white-space: nowrap; letter-spacing: -6px; }
+  .v12 .rule { right: 280px; top: 650px; width: 1460px; height: 2px; background: linear-gradient(to left, var(--gold), transparent); }
+  .v12 .table { right: 280px; top: 700px; width: 1000px; }
+  .v12 .table div { display: flex; gap: 30px; padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,.1); font: 300 30px "Noto Sans Hebrew"; }
+  .v12 .table b { width: 230px; font-weight: 900; font-size: 26px; color: var(--gold); padding-top: 3px; }
 </style>
 </head>
 <body>
-<h1 class="page">כיכר המדינה · 6 גרסאות עיצוב</h1>
+<h1 class="page">כיכר המדינה · 12 גרסאות עיצוב</h1>
 <p class="page">אותה פלטה (כחול לילה, זהב, לבן) · פונטים ומבנים טיפוגרפיים שונים</p>
 
 <!-- 1 -->
@@ -209,6 +282,79 @@
   <div class="dash"></div>
   <div class="cr cr-r"><b>קבלן מבצע:</b> שיתופית חברה לבניה בע״מ<br><b>חברת ניהול:</b> אייל רוטברט הנדסה וניהול בע״מ</div>
   <div class="cr cr-l"><b>צילום ועריכה:</b> דורון סהר וגילי חן</div>
+</div></div></section>
+
+<!-- 7 -->
+<section class="wrap"><h2>7 · עוגן תחתון <span>— Bellefair + Heebo</span></h2><div class="frame"><div class="slide v7" id="s7">
+  <div class="glow"></div>
+  <img class="logo" src="logo.png" alt="">
+  <div class="credits"><b>קבלן מבצע:</b> שיתופית חברה לבניה בע״מ<br><b>חברת ניהול:</b> אייל רוטברט הנדסה וניהול בע״מ<br><b>צילום ועריכה:</b> דורון סהר וגילי חן</div>
+  <div class="rule"></div>
+  <div class="kick">הקמת בית ספר</div>
+  <div class="name">כיכר המדינה</div>
+</div></div></section>
+
+<!-- 8 -->
+<section class="wrap"><h2>8 · רצועת זהב <span>— Heebo</span></h2><div class="frame"><div class="slide v8" id="s8">
+  <div class="glow"></div>
+  <img class="logo" src="logo.png" alt="">
+  <div class="kick">הקמת בית ספר</div>
+  <div class="band"></div>
+  <div class="name">כיכר המדינה</div>
+  <div class="credits">
+    <div><b>קבלן מבצע</b><span>שיתופית חברה לבניה בע״מ</span></div>
+    <div><b>חברת ניהול</b><span>אייל רוטברט הנדסה וניהול בע״מ</span></div>
+    <div><b>צילום ועריכה</b><span>דורון סהר וגילי חן</span></div>
+  </div>
+</div></div></section>
+
+<!-- 9 -->
+<section class="wrap"><h2>9 · טבעת <span>— Varela Round</span></h2><div class="frame"><div class="slide v9" id="s9">
+  <div class="glow"></div>
+  <div class="ring"></div><div class="ring2"></div>
+  <img class="logo" src="logo.png" alt="">
+  <div class="kick">הקמת בית ספר</div>
+  <div class="name">כיכר<br>המדינה</div>
+  <div class="credits"><b>קבלן מבצע:</b> שיתופית חברה לבניה בע״מ<br><b>חברת ניהול:</b> אייל רוטברט הנדסה וניהול בע״מ<br><b>צילום ועריכה:</b> דורון סהר וגילי חן</div>
+</div></div></section>
+
+<!-- 10 -->
+<section class="wrap"><h2>10 · כריכת ספר <span>— Noto Serif Hebrew + David Libre</span></h2><div class="frame"><div class="slide v10" id="s10">
+  <div class="glow"></div>
+  <div class="f1"></div><div class="f2"></div>
+  <img class="logo" src="logo.png" alt="">
+  <div class="kick">הקמת בית ספר</div>
+  <div class="name">כיכר המדינה</div>
+  <div class="orn"><i></i><em></em><i></i></div>
+  <div class="credits"><b>קבלן מבצע:</b> שיתופית חברה לבניה בע״מ<br><b>חברת ניהול:</b> אייל רוטברט הנדסה וניהול בע״מ<br><b>צילום ועריכה:</b> דורון סהר וגילי חן</div>
+</div></div></section>
+
+<!-- 11 -->
+<section class="wrap"><h2>11 · גריד שוויצרי <span>— Miriam Libre</span></h2><div class="frame"><div class="slide v11" id="s11">
+  <div class="glow"></div>
+  <div class="gl gx1"></div><div class="gl gx2"></div><div class="gl gy1"></div><div class="gl gy2"></div>
+  <div class="dot d1"></div><div class="dot d2"></div><div class="dot d3"></div><div class="dot d4"></div>
+  <img class="logo" src="logo.png" alt="">
+  <div class="kick">הקמת בית ספר</div>
+  <div class="name">כיכר המדינה</div>
+  <div class="cell c1"><b>קבלן מבצע</b><span>שיתופית חברה לבניה בע״מ</span></div>
+  <div class="cell c2"><b>חברת ניהול</b><span>אייל רוטברט הנדסה וניהול בע״מ</span></div>
+  <div class="cell c3"><b>צילום ועריכה</b><span>דורון סהר וגילי חן</span></div>
+</div></div></section>
+
+<!-- 12 -->
+<section class="wrap"><h2>12 · כותרת אנכית <span>— Noto Sans Hebrew</span></h2><div class="frame"><div class="slide v12" id="s12">
+  <div class="glow"></div>
+  <div class="strip"></div>
+  <div class="kick">הקמת בית ספר</div>
+  <img class="logo" src="logo.png" alt="">
+  <div class="name">כיכר המדינה</div>
+  <div class="rule"></div>
+  <div class="table">
+    <div><b>קבלן מבצע</b><span>שיתופית חברה לבניה בע״מ</span></div>
+    <div><b>חברת ניהול</b><span>אייל רוטברט הנדסה וניהול בע״מ</span></div>
+    <div><b>צילום ועריכה</b><span>דורון סהר וגילי חן</span></div>
+  </div>
 </div></div></section>
 
 <script>
