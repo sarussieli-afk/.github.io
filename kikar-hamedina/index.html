@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>כיכר המדינה · 6 גרסאות</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+  :root {
+    --navy: #0a1422;
+    --navy-2: #102036;
+    --navy-3: #13243b;
+    --gold: #f3dd98;
+    --gold-deep: #d6b766;
+    --white: #ffffff;
+    --muted: rgba(255,255,255,.72);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #05090f; }
+  body { padding: 40px 16px 80px; font-family: "Assistant", sans-serif; color: var(--white); }
+  h1.page { text-align: center; font: 800 28px "Assistant"; color: var(--gold); margin-bottom: 8px; }
+  p.page { text-align: center; color: var(--muted); margin-bottom: 36px; }
+
+  /* each slide is a fixed 1920x1080 canvas, scaled down in the gallery */
+  .wrap { width: min(1200px, 100%); margin: 0 auto 48px; }
+  .wrap h2 { font: 700 18px "Assistant"; color: var(--gold); margin-bottom: 10px; }
+  .wrap h2 span { color: var(--muted); font-weight: 400; }
+  .frame { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 6px; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  .slide {
+    position: absolute; top: 0; right: 0; width: 1920px; height: 1080px;
+    transform-origin: top right; transform: scale(var(--k, .625));
+    overflow: hidden;
+    background: radial-gradient(ellipse 75% 70% at 50% 40%, var(--navy-2) 0%, var(--navy) 70%, #060d17 100%);
+  }
+  .slide > * { position: absolute; }
+  .logo { width: 360px; }
+  .glow { width: 900px; height: 520px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(243,221,152,.06), transparent); pointer-events: none; }
+  .lbl { color: var(--gold); }
+
+  /* ───────── 1 · Monumental serif ───────── */
+  .v1 .glow { left: 510px; top: -150px; }
+  .v1 .logo { width: 320px; left: 800px; top: 70px; }
+  .v1 .kick { top: 380px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 36px;
+    font: 500 46px "Frank Ruhl Libre"; color: var(--gold); letter-spacing: 10px; }
+  .v1 .kick i { position: static; display: block; width: 150px; height: 2px; background: var(--gold-deep); }
+  .v1 .name { top: 440px; left: 0; right: 0; text-align: center; font: 900 250px/1.05 "Frank Ruhl Libre"; letter-spacing: -2px; }
+  .v1 .rule { left: 160px; right: 160px; top: 850px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-deep) 20%, var(--gold-deep) 80%, transparent); }
+  .v1 .credits { top: 885px; left: 160px; right: 160px; display: flex; justify-content: space-between; text-align: center; }
+  .v1 .credits div { position: static; flex: 1; }
+  .v1 .credits b { display: block; font: 500 24px "Frank Ruhl Libre"; color: var(--gold); letter-spacing: 3px; margin-bottom: 6px; }
+  .v1 .credits span { position: static; font: 300 30px "Frank Ruhl Libre"; }
+
+  /* ───────── 2 · Stacked heavy ───────── */
+  .v2 .bar { right: 120px; top: 250px; width: 14px; height: 650px; background: linear-gradient(var(--gold), var(--gold-deep)); }
+  .v2 .kick { right: 170px; top: 240px; font: 400 72px "Secular One"; color: var(--gold); }
+  .v2 .name { right: 164px; top: 330px; font: 400 300px/.86 "Secular One"; text-align: right; }
+  .v2 .glow { left: -150px; top: -170px; }
+  .v2 .logo { left: 120px; top: 100px; width: 340px; }
+  .v2 .credits { left: 120px; bottom: 110px; width: 560px; text-align: right; }
+  .v2 .credits div { position: static; padding: 18px 0; border-top: 1px solid rgba(243,221,152,.25); }
+  .v2 .credits b { display: block; font: 800 24px "Assistant"; color: var(--gold); margin-bottom: 2px; }
+  .v2 .credits span { font: 400 30px "Assistant"; }
+
+  /* ───────── 3 · Filled + outline ───────── */
+  .v3 .glow { left: 510px; top: -170px; }
+  .v3 .logo { left: 820px; top: 70px; width: 280px; }
+  .v3 .pill { left: 50%; transform: translateX(-50%); top: 340px; padding: 10px 44px 14px; border: 2px solid var(--gold); border-radius: 999px;
+    font: 500 42px "Rubik"; color: var(--gold); white-space: nowrap; }
+  .v3 .name { left: 0; right: 0; top: 450px; text-align: center; font: 900 230px/1 "Rubik"; white-space: nowrap; letter-spacing: -3px; }
+  .v3 .name em { position: static; font-style: normal; color: var(--gold); filter: url(#outline); }
+  .v3 .credits { left: 0; right: 0; bottom: 110px; display: flex; justify-content: center; align-items: center; gap: 28px; font: 300 27px "Rubik"; white-space: nowrap; }
+  .v3 .credits > * { position: static; }
+  .v3 .credits b { font-weight: 500; color: var(--gold); }
+  .v3 .credits i { width: 8px; height: 8px; border-radius: 50%; background: var(--gold-deep); }
+
+  /* ───────── 4 · Split panel ───────── */
+  .v4 .panel { right: 0; top: 0; bottom: 0; width: 640px; background: linear-gradient(160deg, var(--navy-3), #0c192b); border-left: 2px solid var(--gold-deep); }
+  .v4 .glow { right: -130px; top: -120px; }
+  .v4 .logo { right: 140px; top: 120px; width: 360px; }
+  .v4 .credits { right: 110px; bottom: 120px; width: 440px; }
+  .v4 .credits div { position: static; margin-top: 34px; }
+  .v4 .credits b { display: block; font: 800 22px "Assistant"; color: var(--gold); letter-spacing: 2px; }
+  .v4 .credits span { font: 400 30px/1.3 "Assistant"; }
+  .v4 .ghost { left: -60px; bottom: -150px; font: 400 520px/1 "Suez One"; color: rgba(243,221,152,.045); white-space: nowrap; }
+  .v4 .kick { right: 760px; top: 330px; font: 800 44px "Assistant"; color: var(--gold); letter-spacing: 4px; }
+  .v4 .name { right: 755px; top: 395px; font: 400 170px/1.15 "Suez One"; white-space: nowrap; }
+  .v4 .rule { right: 760px; top: 640px; width: 140px; height: 8px; background: var(--gold); }
+
+  /* ───────── 5 · Condensed poster ───────── */
+  .v5 .top { left: 110px; right: 110px; top: 250px; height: 2px; background: var(--gold-deep); }
+  .v5 .glow { right: 0; top: -250px; }
+  .v5 .logo { right: 110px; top: 48px; width: 330px; }
+  .v5 .kick { left: 110px; top: 150px; font: 400 92px/1 "Karantina"; color: var(--gold); letter-spacing: 2px; }
+  .v5 .name { left: 0; right: 0; top: 250px; text-align: center; font: 700 520px/1 "Karantina"; white-space: nowrap; letter-spacing: 4px; }
+  .v5 .bottom { left: 110px; right: 110px; top: 850px; height: 2px; background: var(--gold-deep); }
+  .v5 .credits { left: 110px; right: 110px; top: 880px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+  .v5 .credits div { position: static; }
+  .v5 .credits b { display: block; font: 400 44px/1 "Karantina"; color: var(--gold); letter-spacing: 1px; }
+  .v5 .credits span { font: 400 30px "Assistant"; }
+
+  /* ───────── 6 · Thin frame ───────── */
+  .v6 .box { left: 90px; right: 90px; top: 140px; bottom: 90px; border: 1.5px solid rgba(243,221,152,.55); border-top: 0; }
+  .v6 .tl { top: 140px; height: 1.5px; background: rgba(243,221,152,.55); }
+  .v6 .tl1 { right: 90px; width: 640px; }
+  .v6 .tl2 { left: 90px; width: 640px; }
+  .v6 .corner { width: 34px; height: 34px; border-color: var(--gold); border-style: solid; }
+  .v6 .c1 { right: 80px; top: 130px; border-width: 4px 4px 0 0; }
+  .v6 .c2 { left: 80px; top: 130px; border-width: 4px 0 0 4px; }
+  .v6 .c3 { right: 80px; bottom: 80px; border-width: 0 4px 4px 0; }
+  .v6 .c4 { left: 80px; bottom: 80px; border-width: 0 0 4px 4px; }
+  .v6 .glow { left: 510px; top: -200px; }
+    .v6 .logo { left: 800px; top: 50px; width: 320px; }
+  .v6 .kick { left: 0; right: 0; top: 360px; text-align: center; font: 200 76px "IBM Plex Sans Hebrew"; letter-spacing: 26px; }
+  .v6 .name { left: 0; right: 0; top: 450px; text-align: center; font: 700 220px/1.1 "IBM Plex Sans Hebrew"; color: var(--gold); letter-spacing: -2px; }
+  .v6 .dash { left: 50%; transform: translateX(-50%); top: 740px; width: 90px; height: 3px; background: var(--white); opacity: .6; }
+  .v6 .cr { bottom: 130px; font: 200 27px/1.6 "IBM Plex Sans Hebrew"; }
+  .v6 .cr b { position: static; font-weight: 400; color: var(--gold); }
+  .v6 .cr-r { right: 150px; }
+  .v6 .cr-l { left: 150px; }
+</style>
+</head>
+<body>
+<h1 class="page">כיכר המדינה · 6 גרסאות עיצוב</h1>
+<p class="page">אותה פלטה (כחול לילה, זהב, לבן) · פונטים ומבנים טיפוגרפיים שונים</p>
+
+<!-- 1 -->
+<section class="wrap"><h2>1 · מונומנטלי <span>— Frank Ruhl Libre</span></h2><div class="frame"><div class="slide v1" id="s1">
+  <div class="glow"></div>
+  <img class="logo" src="logo.png" alt="">
+  <div class="kick"><i></i>הקמת בית ספר<i></i></div>
+  <div class="name">כיכר המדינה</div>
+  <div class="rule"></div>
+  <div class="credits">
+    <div><b>קבלן מבצע</b><span>שיתופית חברה לבניה בע״מ</span></div>
+    <div><b>חברת ניהול</b><span>אייל רוטברט הנדסה וניהול בע״מ</span></div>
+    <div><b>צילום ועריכה</b><span>דורון סהר וגילי חן</span></div>
+  </div>
+</div></div></section>
+
+<!-- 2 -->
+<section class="wrap"><h2>2 · עמודה מוערמת <span>— Secular One + Assistant</span></h2><div class="frame"><div class="slide v2" id="s2">
+  <div class="glow"></div>
+  <img class="logo" src="logo.png" alt="">
+  <div class="bar"></div>
+  <div class="kick">הקמת בית ספר</div>
+  <div class="name">כיכר<br>המדינה</div>
+  <div class="credits">
+    <div><b>קבלן מבצע</b><span>שיתופית חברה לבניה בע״מ</span></div>
+    <div><b>חברת ניהול</b><span>אייל רוטברט הנדסה וניהול בע״מ</span></div>
+    <div><b>צילום ועריכה</b><span>דורון סהר וגילי חן</span></div>
+  </div>
+</div></div></section>
+
+<!-- 3 -->
+<svg width="0" height="0" style="position:absolute"><filter id="outline"><feMorphology in="SourceAlpha" operator="erode" radius="4" result="in"/><feComposite in="SourceGraphic" in2="in" operator="out"/></filter></svg>
+<section class="wrap"><h2>3 · מלא וקו מתאר <span>— Rubik</span></h2><div class="frame"><div class="slide v3" id="s3">
+  <div class="glow"></div>
+  <img class="logo" src="logo.png" alt="">
+  <div class="pill">הקמת בית ספר</div>
+  <div class="name">כיכר <em>המדינה</em></div>
+  <div class="credits">
+    <span><b>קבלן מבצע:</b> שיתופית חברה לבניה בע״מ</span><i></i>
+    <span><b>חברת ניהול:</b> אייל רוטברט הנדסה וניהול בע״מ</span><i></i>
+    <span><b>צילום ועריכה:</b> דורון סהר וגילי חן</span>
+  </div>
+</div></div></section>
+
+<!-- 4 -->
+<section class="wrap"><h2>4 · פאנל מפוצל <span>— Suez One + Assistant</span></h2><div class="frame"><div class="slide v4" id="s4">
+  <div class="ghost">המדינה</div>
+  <div class="panel"></div>
+  <div class="glow"></div>
+  <img class="logo" src="logo.png" alt="">
+  <div class="kick">הקמת בית ספר</div>
+  <div class="name">כיכר המדינה</div>
+  <div class="rule"></div>
+  <div class="credits">
+    <div><b>קבלן מבצע</b><span>שיתופית חברה לבניה בע״מ</span></div>
+    <div><b>חברת ניהול</b><span>אייל רוטברט הנדסה וניהול בע״מ</span></div>
+    <div><b>צילום ועריכה</b><span>דורון סהר וגילי חן</span></div>
+  </div>
+</div></div></section>
+
+<!-- 5 -->
+<section class="wrap"><h2>5 · פוסטר צר <span>— Karantina + Assistant</span></h2><div class="frame"><div class="slide v5" id="s5">
+  <div class="glow"></div>
+  <img class="logo" src="logo.png" alt="">
+  <div class="kick">הקמת בית ספר</div>
+  <div class="top"></div>
+  <div class="name">כיכר המדינה</div>
+  <div class="bottom"></div>
+  <div class="credits">
+    <div><b>קבלן מבצע</b><span>שיתופית חברה לבניה בע״מ</span></div>
+    <div><b>חברת ניהול</b><span>אייל רוטברט הנדסה וניהול בע״מ</span></div>
+    <div><b>צילום ועריכה</b><span>דורון סהר וגילי חן</span></div>
+  </div>
+</div></div></section>
+
+<!-- 6 -->
+<section class="wrap"><h2>6 · מסגרת דקה <span>— IBM Plex Sans Hebrew</span></h2><div class="frame"><div class="slide v6" id="s6">
+  <div class="glow"></div>
+  <div class="box"></div>
+  <div class="corner c1"></div><div class="corner c2"></div><div class="corner c3"></div><div class="corner c4"></div>
+  <div class="tl tl1"></div><div class="tl tl2"></div>
+  <img class="logo" src="logo.png" alt="">
+  <div class="kick">הקמת בית ספר</div>
+  <div class="name">כיכר המדינה</div>
+  <div class="dash"></div>
+  <div class="cr cr-r"><b>קבלן מבצע:</b> שיתופית חברה לבניה בע״מ<br><b>חברת ניהול:</b> אייל רוטברט הנדסה וניהול בע״מ</div>
+  <div class="cr cr-l"><b>צילום ועריכה:</b> דורון סהר וגילי חן</div>
+</div></div></section>
+
+<script>
+  // scale the 1920px canvases to their frame; ?full renders them at 1:1 for export
+  const full = new URLSearchParams(location.search).has('full');
+  function fit() {
+    document.querySelectorAll('.frame').forEach(f => {
+      const k = full ? 1 : f.clientWidth / 1920;
+      f.querySelector('.slide').style.setProperty('--k', k);
+      if (full) { f.style.width = '1920px'; f.style.height = '1080px'; f.style.borderRadius = 0; }
+    });
+  }
+  if (full) document.querySelectorAll('.wrap').forEach(w => w.style.width = '1920px');
+  addEventListener('resize', fit); fit();
+</script>
+</body>
+</html>
