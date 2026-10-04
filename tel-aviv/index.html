@@ -103,6 +103,7 @@
     { name: 'הצפון החדש',  c: [34.7850, 32.0925], r: 600, color: '#c58bfc' },
     { name: 'הנמל',        c: [34.7745, 32.0975], r: 350, color: '#4cb8f5' },
     { name: 'בבלי',        c: [34.7960, 32.0925], r: 380, color: '#55dc84' },
+    { name: 'כיכר המדינה', c: [34.7898, 32.0868], r: 190, color: '#ff6b6b' },
     { name: 'רמת אביב',    c: [34.7990, 32.1135], r: 700, color: '#f5cf3a' },
   ];
   const KX = 111320 * Math.cos(32.08 * Math.PI / 180), KY = 110950;
@@ -133,6 +134,42 @@
     return { buildings: fc(buildings), roads: fc(roads), water: fc(water), green: fc(green) };
   }
 
+  // ---- מגדלי כיכר המדינה (בבנייה): לפי נתוני הפרויקט, המיקום בתוך הכיכר מקורב ----
+  // שני מגדלים 160 מ׳ / 40 קומות, מגדל מזרחי 157 מ׳ / 37 קומות, כל קומה מסובבת 1.25° ביחס לקומה שמתחתיה
+  const KIKAR = { c: [34.78985, 32.08683], R: 132,
+    towers: [
+      { nm: 'מגדלי כיכר המדינה · צפוני', ang: 90,  floors: 40, h: 160 },
+      { nm: 'מגדלי כיכר המדינה · מזרחי', ang: -10, floors: 37, h: 157 },
+      { nm: 'מגדלי כיכר המדינה · דרומי', ang: 250, floors: 40, h: 160 },
+    ] };
+  const off = ([x, y], dx, dy) => [x + dx / KX, y + dy / KY];
+  function kikarFeatures() {
+    const bld = [], ground = [], [cx, cy] = KIKAR.c;
+    KIKAR.towers.forEach((t, ti) => {
+      const a = t.ang * Math.PI / 180, center = off(KIKAR.c, 78 * Math.cos(a), 78 * Math.sin(a));
+      const fh = t.h / t.floors;
+      for (let f = 0; f < t.floors; f++) {
+        const rot = (f * 1.25 + t.ang) * Math.PI / 180, pts = [];
+        // קומה טיפוסית: מרובע מעוגל ~30×30 מ׳
+        for (let k = 0; k <= 32; k++) {
+          const th = k / 32 * 2 * Math.PI, c = Math.cos(th), s = Math.sin(th);
+          const r = 15 / Math.pow(Math.pow(Math.abs(c), 4) + Math.pow(Math.abs(s), 4), 0.25);
+          pts.push(off(center, r * Math.cos(th + rot), r * Math.sin(th + rot)));
+        }
+        pts[pts.length - 1] = pts[0];
+        bld.push({ type: 'Feature', properties: { h: +((f + 1) * fh - 0.35).toFixed(2), mh: +(f * fh).toFixed(2), est: 0, fl: t.floors, nm: t.nm, n: -1, kikar: 1 },
+          geometry: { type: 'Polygon', coordinates: [pts] } });
+      }
+    });
+    // מבנה ציבור בן 10 קומות (מערב הכיכר)
+    const pb = off(KIKAR.c, -80, -10), pbr = [[-16, -12], [16, -12], [16, 12], [-16, 12], [-16, -12]].map(([dx, dy]) => off(pb, dx, dy));
+    bld.push({ type: 'Feature', properties: { h: 40, mh: 0, est: 1, fl: 10, nm: 'כיכר המדינה · מבנה ציבור', n: -1, kikar: 1 }, geometry: { type: 'Polygon', coordinates: [pbr] } });
+    // פארק ואגם אקולוגי
+    ground.push({ type: 'Feature', properties: { s: 0 }, geometry: circle(KIKAR.c, KIKAR.R - 6).geometry });
+    const lake = []; for (let k = 0; k <= 48; k++) { const th = k / 48 * 2 * Math.PI; lake.push(off(KIKAR.c, 38 * Math.cos(th) - 5, 22 * Math.sin(th) - 30)); }
+    return { bld, ground, lake: { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [lake] } } };
+  }
+
   const MAJOR = ['motorway', 'trunk', 'primary', 'secondary'];
   const map = new maplibregl.Map({
     container: 'map',
@@ -151,6 +188,10 @@
   .then(([D]) => {
     document.getElementById('attr').textContent = D.attr;
     const g = decode(D);
+    const K = kikarFeatures();
+    g.buildings.features.push(...K.bld.map(f => (f.properties.n = HOODS.findIndex(h => h.name === 'כיכר המדינה'), f)));
+    g.green.features.push(...K.ground);
+    g.water.features.push(K.lake);
     map.addSource('water', { type: 'geojson', data: g.water });
     map.addSource('green', { type: 'geojson', data: g.green });
     map.addSource('roads', { type: 'geojson', data: g.roads });
@@ -217,7 +258,11 @@
 
   function showCard(p) {
     document.getElementById('cName').textContent = p.nm || 'בניין';
-    document.getElementById('cH').textContent = (p.est ? '~' : '') + Math.round(p.h) + ' מ׳';
+    document.getElementById('cH').textContent = (p.est ? '~' : '') + Math.round(p.kikar && p.fl >= 37 ? (p.fl === 37 ? 157 : 160) : p.h) + ' מ׳';
+    if (p.kikar) {
+      document.getElementById('cMeta').textContent = p.fl + ' קומות · בבנייה, צפי סיום 2027–2028 · מיקום מקורב לפי הדמיות הפרויקט';
+      document.getElementById('card').hidden = false; return;
+    }
     document.getElementById('cMeta').textContent = p.est ? 'גובה משוער לפי גודל הבניין (אין נתון גובה ב-OSM)'
       : (p.fl ? p.fl + ' קומות · ' : '') + (p.fl && !p.nm ? 'גובה מחושב ממספר הקומות' : 'גובה מ-OpenStreetMap');
     document.getElementById('card').hidden = false;
