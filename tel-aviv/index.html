@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b0c">
+  <title>תל אביב 3D</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <style>
+    :root{--bg:#0b0b0c;--panel:rgba(14,14,16,.82);--line:rgba(255,255,255,.1);--text:#f2f2f3;--muted:#8a8a90}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Rubik,Arial,sans-serif;overflow:hidden}
+    #map{position:fixed;inset:0}
+    .top{position:fixed;top:0;inset-inline:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:max(14px,env(safe-area-inset-top)) 16px 14px;background:linear-gradient(var(--bg),rgba(11,11,12,0));pointer-events:none;z-index:2}
+    .brand{font-weight:800;font-size:22px;letter-spacing:-.03em;direction:ltr}
+    .tools{display:flex;gap:8px;pointer-events:auto}
+    .tools button{border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;font-size:13px;font-weight:600;padding:8px 12px;border-radius:10px;cursor:pointer;backdrop-filter:blur(10px)}
+    .tools button[aria-pressed="true"]{background:#f2f2f3;color:#0b0b0c}
+    .chips{position:fixed;bottom:0;inset-inline:0;display:flex;gap:8px;overflow-x:auto;padding:14px 16px max(16px,env(safe-area-inset-bottom));background:linear-gradient(rgba(11,11,12,0),var(--bg));scrollbar-width:none;z-index:2}
+    .chips::-webkit-scrollbar{display:none}
+    .chip{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;font-size:14px;font-weight:600;padding:9px 14px;border-radius:999px;cursor:pointer;backdrop-filter:blur(10px);display:flex;align-items:center;gap:8px}
+    .chip i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+    .chip.on{border-color:var(--c);box-shadow:0 0 0 1px var(--c) inset}
+    .hood{font-size:17px;font-weight:700;padding:6px 12px;border-radius:9px;color:var(--c);background:color-mix(in srgb,var(--c) 16%,rgba(12,12,14,.85));border:1.5px solid color-mix(in srgb,var(--c) 70%,transparent);box-shadow:0 4px 18px rgba(0,0,0,.5);cursor:pointer;white-space:nowrap;transition:transform .2s}
+    .hood.on{transform:scale(1.12);color:#fff;background:color-mix(in srgb,var(--c) 45%,rgba(12,12,14,.9))}
+    .maplibregl-ctrl-attrib{background:rgba(11,11,12,.6)!important;font-size:10px}
+    .maplibregl-ctrl-attrib a{color:#9a9aa0!important}
+    .maplibregl-ctrl-bottom-right,.maplibregl-ctrl-bottom-left{bottom:62px}
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <header class="top">
+    <div class="brand">telaviv<span style="color:var(--muted)">3d</span></div>
+    <div class="tools">
+      <button id="orbit" aria-pressed="true">סיבוב</button>
+      <button id="dim" aria-pressed="true">3D</button>
+    </div>
+  </header>
+  <nav class="chips" id="chips"></nav>
+
+  <script>
+    // מרכזי שכונות ורדיוס ההדגשה (מטרים)
+    const HOODS = [
+      { name: 'הצפון הישן',   c: [34.7765, 32.0880], r: 650, color: '#a78bfa' },
+      { name: 'לב העיר',      c: [34.7740, 32.0735], r: 600, color: '#60a5fa' },
+      { name: 'פלורנטין',     c: [34.7685, 32.0565], r: 400, color: '#f5b94a' },
+      { name: 'נווה צדק',     c: [34.7655, 32.0620], r: 330, color: '#f472b6' },
+      { name: 'כרם התימנים',  c: [34.7680, 32.0700], r: 260, color: '#34d399' },
+      { name: 'יפו העתיקה',   c: [34.7525, 32.0545], r: 380, color: '#fb923c' },
+      { name: 'שרונה',        c: [34.7870, 32.0720], r: 350, color: '#22d3ee' },
+      { name: 'הצפון החדש',   c: [34.7850, 32.0920], r: 600, color: '#c084fc' },
+      { name: 'הנמל',         c: [34.7745, 32.0975], r: 350, color: '#38bdf8' },
+      { name: 'בבלי',         c: [34.7960, 32.0925], r: 380, color: '#4ade80' },
+      { name: 'רמת אביב',     c: [34.7990, 32.1135], r: 700, color: '#facc15' },
+    ];
+
+    const BASE_GREY = ['interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 6],
+      0, '#4a4a4f', 20, '#7c7c82', 60, '#b4b4ba', 150, '#ececef'];
+
+    const style = {
+      version: 8,
+      sources: { omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' } },
+      light: { anchor: 'viewport', color: '#ffffff', intensity: 0.35, position: [1.2, 200, 35] },
+      sky: { 'sky-color': '#0b0b0c', 'horizon-color': '#18181b', 'fog-color': '#0b0b0c', 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.7, 'fog-ground-blend': 0.55 },
+      layers: [
+        { id: 'bg', type: 'background', paint: { 'background-color': '#0e0e10' } },
+        { id: 'park', type: 'fill', source: 'omt', 'source-layer': 'park', paint: { 'fill-color': '#121413' } },
+        { id: 'landcover', type: 'fill', source: 'omt', 'source-layer': 'landcover',
+          filter: ['in', ['get', 'class'], ['literal', ['grass', 'wood', 'sand']]], paint: { 'fill-color': '#121413' } },
+        { id: 'water', type: 'fill', source: 'omt', 'source-layer': 'water', paint: { 'fill-color': '#060608' } },
+        { id: 'waterway', type: 'line', source: 'omt', 'source-layer': 'waterway', paint: { 'line-color': '#060608', 'line-width': 3 } },
+        { id: 'roads-minor', type: 'line', source: 'omt', 'source-layer': 'transportation',
+          filter: ['in', ['get', 'class'], ['literal', ['minor', 'service', 'path', 'track']]],
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#1f1f23', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 13, 0.4, 18, 7] } },
+        { id: 'roads-major', type: 'line', source: 'omt', 'source-layer': 'transportation',
+          filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary']]],
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#2c2c31', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 12, 1, 18, 16] } },
+        { id: 'rail', type: 'line', source: 'omt', 'source-layer': 'transportation',
+          filter: ['==', ['get', 'class'], 'rail'], paint: { 'line-color': '#26262a', 'line-width': 1.5, 'line-dasharray': [3, 3] } },
+        { id: 'buildings', type: 'fill-extrusion', source: 'omt', 'source-layer': 'building', minzoom: 12,
+          filter: ['!=', ['get', 'hide_3d'], true],
+          paint: {
+            'fill-extrusion-color': BASE_GREY,
+            'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 6],
+            'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+            'fill-extrusion-opacity': 1,
+            'fill-extrusion-vertical-gradient': true,
+          } },
+      ],
+    };
+
+    const map = new maplibregl.Map({
+      container: 'map', style,
+      center: [34.7740, 32.0760], zoom: 14.6, pitch: 62, bearing: -28,
+      maxPitch: 75, minZoom: 12, maxBounds: [[34.70, 32.00], [34.86, 32.15]],
+      attributionControl: { compact: true },
+    });
+
+    // ---- עיגול הדגשה על הקרקע לשכונה הנבחרת ----
+    function circle([lng, lat], r, n = 64) {
+      const pts = [], dLat = r / 111320, dLng = r / (111320 * Math.cos(lat * Math.PI / 180));
+      for (let i = 0; i <= n; i++) { const a = (i / n) * 2 * Math.PI; pts.push([lng + dLng * Math.cos(a), lat + dLat * Math.sin(a)]); }
+      return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [pts] } };
+    }
+
+    let active = null;
+    const markers = [], chips = [];
+
+    function select(i) {
+      active = active === i ? null : i;
+      markers.forEach((m, j) => m.classList.toggle('on', j === active));
+      chips.forEach((c, j) => c.classList.toggle('on', j === active));
+      const src = map.getSource('glow');
+      if (active === null) {
+        src.setData({ type: 'FeatureCollection', features: [] });
+        map.setPaintProperty('buildings', 'fill-extrusion-color', BASE_GREY);
+        return;
+      }
+      const h = HOODS[active];
+      src.setData(circle(h.c, h.r));
+      map.setPaintProperty('glow', 'fill-color', h.color);
+      // צביעת הבניינים בתוך רדיוס השכונה (ביטוי distance – MapLibre 4.2+)
+      map.setPaintProperty('buildings', 'fill-extrusion-color', ['case',
+        ['<', ['distance', { type: 'Point', coordinates: h.c }], h.r],
+        ['interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 6], 0, shade(h.color, -0.45), 40, h.color, 150, shade(h.color, 0.5)],
+        BASE_GREY]);
+      stopOrbit();
+      map.flyTo({ center: h.c, zoom: 15.6, pitch: 64, bearing: map.getBearing() - 20, duration: 2200, essential: true });
+    }
+
+    function shade(hex, t) {
+      const n = parseInt(hex.slice(1), 16), ch = [n >> 16, (n >> 8) & 255, n & 255];
+      return '#' + ch.map(v => Math.round(t < 0 ? v * (1 + t) : v + (255 - v) * t).toString(16).padStart(2, '0')).join('');
+    }
+
+    map.on('load', () => {
+      map.addSource('glow', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      map.addLayer({ id: 'glow', type: 'fill', source: 'glow', paint: { 'fill-color': '#fff', 'fill-opacity': 0.12 } }, 'buildings');
+
+      const bar = document.getElementById('chips');
+      HOODS.forEach((h, i) => {
+        const el = document.createElement('div');
+        el.className = 'hood'; el.textContent = h.name; el.style.setProperty('--c', h.color);
+        el.addEventListener('click', e => { e.stopPropagation(); select(i); });
+        new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(h.c).addTo(map);
+        markers.push(el);
+
+        const chip = document.createElement('button');
+        chip.className = 'chip'; chip.style.setProperty('--c', h.color);
+        chip.innerHTML = '<i></i>' + h.name;
+        chip.addEventListener('click', () => select(i));
+        bar.appendChild(chip); chips.push(chip);
+      });
+      startOrbit();
+    });
+
+    // ---- סיבוב מצלמה איטי ----
+    let orbiting = false, raf = 0, last = 0;
+    const orbitBtn = document.getElementById('orbit');
+    function tick(t) {
+      if (!orbiting) return;
+      if (last && !map.isMoving()) map.setBearing(map.getBearing() + (t - last) * 0.004);
+      last = t; raf = requestAnimationFrame(tick);
+    }
+    function startOrbit() { orbiting = true; last = 0; orbitBtn.setAttribute('aria-pressed', 'true'); raf = requestAnimationFrame(tick); }
+    function stopOrbit() { orbiting = false; cancelAnimationFrame(raf); orbitBtn.setAttribute('aria-pressed', 'false'); }
+    orbitBtn.addEventListener('click', () => orbiting ? stopOrbit() : startOrbit());
+    map.on('mousedown', stopOrbit); map.on('touchstart', stopOrbit); map.on('wheel', stopOrbit);
+
+    // ---- מעבר 2D / 3D ----
+    const dimBtn = document.getElementById('dim');
+    dimBtn.addEventListener('click', () => {
+      const is3d = dimBtn.getAttribute('aria-pressed') === 'true';
+      dimBtn.setAttribute('aria-pressed', String(!is3d));
+      map.easeTo({ pitch: is3d ? 0 : 62, bearing: is3d ? 0 : -28, duration: 1200 });
+      map.setPaintProperty('buildings', 'fill-extrusion-height', is3d ? 0 : ['coalesce', ['get', 'render_height'], 6]);
+      if (is3d) stopOrbit();
+    });
+  </script>
+</body>
+</html>
