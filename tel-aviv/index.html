@@ -1,185 +1,251 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0b0b0c">
-  <title>תל אביב 3D</title>
-  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-  <style>
-    :root{--bg:#0b0b0c;--panel:rgba(14,14,16,.82);--line:rgba(255,255,255,.1);--text:#f2f2f3;--muted:#8a8a90}
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Rubik,Arial,sans-serif;overflow:hidden}
-    #map{position:fixed;inset:0}
-    .top{position:fixed;top:0;inset-inline:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:max(14px,env(safe-area-inset-top)) 16px 14px;background:linear-gradient(var(--bg),rgba(11,11,12,0));pointer-events:none;z-index:2}
-    .brand{font-weight:800;font-size:22px;letter-spacing:-.03em;direction:ltr}
-    .tools{display:flex;gap:8px;pointer-events:auto}
-    .tools button{border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;font-size:13px;font-weight:600;padding:8px 12px;border-radius:10px;cursor:pointer;backdrop-filter:blur(10px)}
-    .tools button[aria-pressed="true"]{background:#f2f2f3;color:#0b0b0c}
-    .chips{position:fixed;bottom:0;inset-inline:0;display:flex;gap:8px;overflow-x:auto;padding:14px 16px max(16px,env(safe-area-inset-bottom));background:linear-gradient(rgba(11,11,12,0),var(--bg));scrollbar-width:none;z-index:2}
-    .chips::-webkit-scrollbar{display:none}
-    .chip{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;font-size:14px;font-weight:600;padding:9px 14px;border-radius:999px;cursor:pointer;backdrop-filter:blur(10px);display:flex;align-items:center;gap:8px}
-    .chip i{width:8px;height:8px;border-radius:50%;background:var(--c)}
-    .chip.on{border-color:var(--c);box-shadow:0 0 0 1px var(--c) inset}
-    .hood{font-size:17px;font-weight:700;padding:6px 12px;border-radius:9px;color:var(--c);background:color-mix(in srgb,var(--c) 16%,rgba(12,12,14,.85));border:1.5px solid color-mix(in srgb,var(--c) 70%,transparent);box-shadow:0 4px 18px rgba(0,0,0,.5);cursor:pointer;white-space:nowrap;transition:transform .2s}
-    .hood.on{transform:scale(1.12);color:#fff;background:color-mix(in srgb,var(--c) 45%,rgba(12,12,14,.9))}
-    .maplibregl-ctrl-attrib{background:rgba(11,11,12,.6)!important;font-size:10px}
-    .maplibregl-ctrl-attrib a{color:#9a9aa0!important}
-    .maplibregl-ctrl-bottom-right,.maplibregl-ctrl-bottom-left{bottom:62px}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111113">
+<title>תל אביב בתלת מימד</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;800&display=swap">
+<style>
+  /* One full-screen dark map; quiet chrome floats over it at the top and bottom edges */
+  :root{
+    --ground:#111113; --sea:#060709; --panel:rgba(16,16,19,.84); --line:rgba(255,255,255,.09);
+    --text:#f1f1f3; --muted:#8b8b93;
+    --sans:"Heebo","Rubik","Segoe UI",Arial,sans-serif;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  [hidden]{display:none!important}
+  html,body{height:100%;margin:0;overflow:hidden}
+  body{background:var(--ground);color:var(--text);font-family:var(--sans);direction:rtl}
+  #map{position:fixed;inset:0}
+  /* minimal MapLibre core styles (the library stylesheet is not loaded) */
+  .maplibregl-map{overflow:hidden;position:relative;-webkit-user-select:none;user-select:none}
+  .maplibregl-canvas{position:absolute;left:0;top:0}
+  .maplibregl-canvas-container.maplibregl-interactive{cursor:grab}
+  .maplibregl-canvas-container.maplibregl-interactive:active{cursor:grabbing}
+  .maplibregl-marker{position:absolute;top:0;left:0;will-change:transform}
+
+  .top{position:fixed;top:0;inset-inline:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 28px;background:linear-gradient(var(--ground),rgba(17,17,19,0));pointer-events:none}
+  .brand{display:flex;flex-direction:column;gap:2px}
+  .brand b{font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .brand small{font-size:12px;color:var(--muted)}
+  .tools{display:flex;gap:8px;pointer-events:auto}
+  .tools button{border:1px solid var(--line);background:var(--panel);color:var(--text);font:600 13px var(--sans);padding:8px 12px;border-radius:10px;cursor:pointer;backdrop-filter:blur(10px)}
+  .tools button[aria-pressed="true"]{background:var(--text);color:var(--ground)}
+  button:focus-visible,.hood:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+  .bottom{position:fixed;bottom:0;inset-inline:0;z-index:3;padding:28px 0 calc(env(safe-area-inset-bottom,0px) + 12px);
+    background:linear-gradient(rgba(17,17,19,0),var(--ground) 55%);display:flex;flex-direction:column;gap:8px}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:0 16px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);color:var(--text);
+    font:600 14px var(--sans);padding:8px 14px;border-radius:999px;cursor:pointer;backdrop-filter:blur(10px)}
+  .chip i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+  .chip.on{border-color:var(--c);box-shadow:inset 0 0 0 1px var(--c)}
+  .attr{padding:0 16px;font-size:10.5px;color:var(--muted);direction:ltr;text-align:left}
+
+  .hood{font:700 16px var(--sans);padding:5px 11px;border-radius:9px;white-space:nowrap;cursor:pointer;color:var(--c);
+    background:color-mix(in srgb,var(--c) 15%,rgba(12,12,14,.86));border:1.5px solid color-mix(in srgb,var(--c) 65%,transparent);
+    box-shadow:0 4px 18px rgba(0,0,0,.55);transition:transform .25s,background .25s,color .25s}
+  .hood.on{transform:scale(1.12);color:#fff;background:color-mix(in srgb,var(--c) 48%,rgba(12,12,14,.9))}
+
+  .card{position:fixed;z-index:4;top:calc(env(safe-area-inset-top,0px) + 70px);inset-inline-end:16px;width:min(260px,calc(100% - 32px));
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;backdrop-filter:blur(12px);display:flex;flex-direction:column;gap:4px}
+  .card h2{margin:0;font-size:16px;font-weight:800}
+  .card p{margin:0;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .card .big{font-size:26px;font-weight:800;color:var(--text);line-height:1.1}
+  .card .x{position:absolute;inset-inline-start:8px;top:6px;background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer}
+
+  .loading{position:fixed;inset:0;z-index:5;display:grid;place-items:center;background:var(--ground);color:var(--muted);font-size:14px;transition:opacity .6s}
+  .loading.done{opacity:0;pointer-events:none}
+  @media (prefers-reduced-motion:reduce){.hood{transition:none}}
+</style>
 </head>
 <body>
-  <div id="map"></div>
-  <header class="top">
-    <div class="brand">telaviv<span style="color:var(--muted)">3d</span></div>
-    <div class="tools">
-      <button id="orbit" aria-pressed="true">סיבוב</button>
-      <button id="dim" aria-pressed="true">3D</button>
-    </div>
-  </header>
+
+<div id="map"></div>
+<div class="loading" id="loading">טוען 43,000 בניינים…</div>
+
+<header class="top">
+  <div class="brand"><b>תל אביב</b><small>כל בניין בגובה האמיתי שלו</small></div>
+  <div class="tools">
+    <button id="orbit" aria-pressed="true">סיבוב</button>
+    <button id="dim" aria-pressed="true">3D</button>
+  </div>
+</header>
+
+<aside class="card" id="card" hidden>
+  <button class="x" id="cardX" aria-label="סגירה">×</button>
+  <h2 id="cName"></h2>
+  <div class="big" id="cH"></div>
+  <p id="cMeta"></p>
+</aside>
+
+<footer class="bottom">
   <nav class="chips" id="chips"></nav>
+  <div class="attr" id="attr"></div>
+</footer>
 
-  <script>
-    // מרכזי שכונות ורדיוס ההדגשה (מטרים)
-    const HOODS = [
-      { name: 'הצפון הישן',   c: [34.7765, 32.0880], r: 650, color: '#a78bfa' },
-      { name: 'לב העיר',      c: [34.7740, 32.0735], r: 600, color: '#60a5fa' },
-      { name: 'פלורנטין',     c: [34.7685, 32.0565], r: 400, color: '#f5b94a' },
-      { name: 'נווה צדק',     c: [34.7655, 32.0620], r: 330, color: '#f472b6' },
-      { name: 'כרם התימנים',  c: [34.7680, 32.0700], r: 260, color: '#34d399' },
-      { name: 'יפו העתיקה',   c: [34.7525, 32.0545], r: 380, color: '#fb923c' },
-      { name: 'שרונה',        c: [34.7870, 32.0720], r: 350, color: '#22d3ee' },
-      { name: 'הצפון החדש',   c: [34.7850, 32.0920], r: 600, color: '#c084fc' },
-      { name: 'הנמל',         c: [34.7745, 32.0975], r: 350, color: '#38bdf8' },
-      { name: 'בבלי',         c: [34.7960, 32.0925], r: 380, color: '#4ade80' },
-      { name: 'רמת אביב',     c: [34.7990, 32.1135], r: 700, color: '#facc15' },
-    ];
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script>
+  // מרכזי שכונות ורדיוס הצביעה במטרים
+  const HOODS = [
+    { name: 'לב העיר',     c: [34.7740, 32.0735], r: 620, color: '#6aa8ff' },
+    { name: 'הצפון הישן',  c: [34.7768, 32.0882], r: 650, color: '#a98bfa' },
+    { name: 'פלורנטין',    c: [34.7685, 32.0565], r: 420, color: '#f2b84b' },
+    { name: 'נווה צדק',    c: [34.7655, 32.0620], r: 320, color: '#f47ab8' },
+    { name: 'כרם התימנים', c: [34.7680, 32.0702], r: 250, color: '#3fd49c' },
+    { name: 'יפו העתיקה',  c: [34.7522, 32.0545], r: 380, color: '#fb8f4a' },
+    { name: 'שרונה',       c: [34.7880, 32.0725], r: 380, color: '#2fd0e8' },
+    { name: 'הצפון החדש',  c: [34.7850, 32.0925], r: 600, color: '#c58bfc' },
+    { name: 'הנמל',        c: [34.7745, 32.0975], r: 350, color: '#4cb8f5' },
+    { name: 'בבלי',        c: [34.7960, 32.0925], r: 380, color: '#55dc84' },
+    { name: 'רמת אביב',    c: [34.7990, 32.1135], r: 700, color: '#f5cf3a' },
+  ];
+  const KX = 111320 * Math.cos(32.08 * Math.PI / 180), KY = 110950;
 
-    const BASE_GREY = ['interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 6],
-      0, '#4a4a4f', 20, '#7c7c82', 60, '#b4b4ba', 150, '#ececef'];
+  const GREY = ['interpolate', ['linear'], ['get', 'h'], 0, '#46464c', 15, '#6c6c73', 45, '#a3a3aa', 140, '#e9e9ec'];
+  const shade = (hex, t) => { const n = parseInt(hex.slice(1), 16);
+    return '#' + [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(t < 0 ? v * (1 + t) : v + (255 - v) * t).toString(16).padStart(2, '0')).join(''); };
 
-    const style = {
-      version: 8,
-      sources: { omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' } },
-      light: { anchor: 'viewport', color: '#ffffff', intensity: 0.35, position: [1.2, 200, 35] },
-      sky: { 'sky-color': '#0b0b0c', 'horizon-color': '#18181b', 'fog-color': '#0b0b0c', 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.7, 'fog-ground-blend': 0.55 },
-      layers: [
-        { id: 'bg', type: 'background', paint: { 'background-color': '#0e0e10' } },
-        { id: 'park', type: 'fill', source: 'omt', 'source-layer': 'park', paint: { 'fill-color': '#121413' } },
-        { id: 'landcover', type: 'fill', source: 'omt', 'source-layer': 'landcover',
-          filter: ['in', ['get', 'class'], ['literal', ['grass', 'wood', 'sand']]], paint: { 'fill-color': '#121413' } },
-        { id: 'water', type: 'fill', source: 'omt', 'source-layer': 'water', paint: { 'fill-color': '#060608' } },
-        { id: 'waterway', type: 'line', source: 'omt', 'source-layer': 'waterway', paint: { 'line-color': '#060608', 'line-width': 3 } },
-        { id: 'roads-minor', type: 'line', source: 'omt', 'source-layer': 'transportation',
-          filter: ['in', ['get', 'class'], ['literal', ['minor', 'service', 'path', 'track']]],
-          layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: { 'line-color': '#1f1f23', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 13, 0.4, 18, 7] } },
-        { id: 'roads-major', type: 'line', source: 'omt', 'source-layer': 'transportation',
-          filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary']]],
-          layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: { 'line-color': '#2c2c31', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 12, 1, 18, 16] } },
-        { id: 'rail', type: 'line', source: 'omt', 'source-layer': 'transportation',
-          filter: ['==', ['get', 'class'], 'rail'], paint: { 'line-color': '#26262a', 'line-width': 1.5, 'line-dasharray': [3, 3] } },
-        { id: 'buildings', type: 'fill-extrusion', source: 'omt', 'source-layer': 'building', minzoom: 12,
-          filter: ['!=', ['get', 'hide_3d'], true],
-          paint: {
-            'fill-extrusion-color': BASE_GREY,
-            'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 6],
-            'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
-            'fill-extrusion-opacity': 1,
-            'fill-extrusion-vertical-gradient': true,
-          } },
-      ],
-    };
+  // ---- פענוח הנתונים הדחוסים ----
+  function decode(D) {
+    const [X0, Y0] = D.origin, q = D.q;
+    const ring = d => { const o = []; let x = 0, y = 0;
+      for (let i = 0; i < d.length; i += 2) { x += d[i]; y += d[i + 1]; o.push([X0 + x / q, Y0 + y / q]); } return o; };
+    const closed = d => { const r = ring(d); r.push(r[0]); return r; };
+    const nearestHood = ([x, y]) => { let best = -1, bd = 1e9;
+      HOODS.forEach((h, i) => { const d = Math.hypot((x - h.c[0]) * KX, (y - h.c[1]) * KY); if (d < h.r && d < bd) { bd = d; best = i; } });
+      return best; };
+    const fc = f => ({ type: 'FeatureCollection', features: f });
+    const buildings = D.b.map(([h, mh, est, fl, nm, ...rings], id) => {
+      const outer = closed(rings[0]);
+      return { type: 'Feature', id,
+        properties: { h, mh, est, fl, nm: nm || '', n: nearestHood(outer[0]) },
+        geometry: { type: 'Polygon', coordinates: [outer, ...rings.slice(1).map(closed)] } };
+    });
+    const roads = D.r.map(([c, ...d]) => ({ type: 'Feature', properties: { c: D.rc[c] }, geometry: { type: 'LineString', coordinates: ring(d) } }));
+    const water = D.w.map(rs => ({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: rs.map(closed) } }));
+    const green = D.g.map(([s, ...rs]) => ({ type: 'Feature', properties: { s }, geometry: { type: 'Polygon', coordinates: rs.map(closed) } }));
+    return { buildings: fc(buildings), roads: fc(roads), water: fc(water), green: fc(green) };
+  }
 
-    const map = new maplibregl.Map({
-      container: 'map', style,
-      center: [34.7740, 32.0760], zoom: 14.6, pitch: 62, bearing: -28,
-      maxPitch: 75, minZoom: 12, maxBounds: [[34.70, 32.00], [34.86, 32.15]],
-      attributionControl: { compact: true },
+  const MAJOR = ['motorway', 'trunk', 'primary', 'secondary'];
+  const map = new maplibregl.Map({
+    container: 'map',
+    style: { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#111113' } }],
+      light: { anchor: 'viewport', color: '#ffffff', intensity: 0.38, position: [1.2, 200, 35] },
+      sky: { 'sky-color': '#111113', 'horizon-color': '#1b1b1f', 'fog-color': '#111113', 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.6, 'fog-ground-blend': 0.6 } },
+    center: [34.7750, 32.0745], zoom: 14.7, pitch: 62, bearing: -24, maxPitch: 78,
+    minZoom: 12.5, maxBounds: [[34.70, 32.00], [34.87, 32.16]], attributionControl: false,
+  });
+
+  let active = null, orbiting = false, raf = 0, last = 0;
+  const markers = [], chips = [];
+
+  Promise.all([fetch('data.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+               new Promise(res => map.once('load', res))])
+  .then(([D]) => {
+    document.getElementById('attr').textContent = D.attr;
+    const g = decode(D);
+    map.addSource('water', { type: 'geojson', data: g.water });
+    map.addSource('green', { type: 'geojson', data: g.green });
+    map.addSource('roads', { type: 'geojson', data: g.roads });
+    map.addSource('glow', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addSource('bld', { type: 'geojson', data: g.buildings });
+    map.addLayer({ id: 'green', type: 'fill', source: 'green', paint: { 'fill-color': ['case', ['==', ['get', 's'], 1], '#19181a', '#131614'] } });
+    map.addLayer({ id: 'water', type: 'fill', source: 'water', paint: { 'fill-color': '#060709' } });
+    map.addLayer({ id: 'roads-minor', type: 'line', source: 'roads', filter: ['!', ['in', ['get', 'c'], ['literal', MAJOR]]],
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#1f1f24', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 13, 0.5, 18, 8] } });
+    map.addLayer({ id: 'roads-major', type: 'line', source: 'roads', filter: ['in', ['get', 'c'], ['literal', MAJOR]],
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#2b2b31', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 12, 1.2, 18, 18] } });
+    map.addLayer({ id: 'glow', type: 'fill', source: 'glow', paint: { 'fill-color': '#fff', 'fill-opacity': 0.1 } });
+    map.addLayer({ id: 'bld', type: 'fill-extrusion', source: 'bld', paint: {
+      'fill-extrusion-color': GREY, 'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-base': ['get', 'mh'],
+      'fill-extrusion-vertical-gradient': true } });
+
+    const bar = document.getElementById('chips');
+    HOODS.forEach((h, i) => {
+      const el = document.createElement('div');
+      el.className = 'hood'; el.textContent = h.name; el.tabIndex = 0; el.style.setProperty('--c', h.color);
+      el.addEventListener('click', e => { e.stopPropagation(); select(i); });
+      el.addEventListener('keydown', e => { if (e.key === 'Enter') select(i); });
+      new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(h.c).addTo(map);
+      markers.push(el);
+      const chip = document.createElement('button');
+      chip.className = 'chip'; chip.style.setProperty('--c', h.color); chip.innerHTML = '<i></i>' + h.name;
+      chip.addEventListener('click', () => select(i));
+      bar.appendChild(chip); chips.push(chip);
     });
 
-    // ---- עיגול הדגשה על הקרקע לשכונה הנבחרת ----
-    function circle([lng, lat], r, n = 64) {
-      const pts = [], dLat = r / 111320, dLng = r / (111320 * Math.cos(lat * Math.PI / 180));
-      for (let i = 0; i <= n; i++) { const a = (i / n) * 2 * Math.PI; pts.push([lng + dLng * Math.cos(a), lat + dLat * Math.sin(a)]); }
-      return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [pts] } };
+    map.on('click', 'bld', e => showCard(e.features[0].properties));
+    map.on('mouseenter', 'bld', () => map.getCanvas().style.cursor = 'pointer');
+    map.on('mouseleave', 'bld', () => map.getCanvas().style.cursor = '');
+    map.once('idle', () => document.getElementById('loading').classList.add('done'));
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) startOrbit();
+  })
+  .catch(err => { document.getElementById('loading').textContent = 'לא הצלחתי לטעון את נתוני הבניינים (' + err.message + '). רעננו את הדף.'; });
+
+  function circle([lng, lat], r, n = 72) {
+    const pts = [];
+    for (let i = 0; i <= n; i++) { const a = i / n * 2 * Math.PI; pts.push([lng + r / KX * Math.cos(a), lat + r / KY * Math.sin(a)]); }
+    return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [pts] } };
+  }
+
+  function select(i) {
+    active = active === i ? null : i;
+    markers.forEach((m, j) => m.classList.toggle('on', j === active));
+    chips.forEach((c, j) => c.classList.toggle('on', j === active));
+    if (active === null) {
+      map.getSource('glow').setData({ type: 'FeatureCollection', features: [] });
+      map.setPaintProperty('bld', 'fill-extrusion-color', GREY);
+      return;
     }
+    const h = HOODS[active];
+    map.getSource('glow').setData(circle(h.c, h.r));
+    map.setPaintProperty('glow', 'fill-color', h.color);
+    map.setPaintProperty('bld', 'fill-extrusion-color', ['case', ['==', ['get', 'n'], active],
+      ['interpolate', ['linear'], ['get', 'h'], 0, shade(h.color, -0.5), 30, shade(h.color, -0.1), 120, shade(h.color, 0.55)], GREY]);
+    stopOrbit();
+    map.flyTo({ center: h.c, zoom: 15.7, pitch: 64, bearing: map.getBearing() - 15, duration: 2200, essential: true });
+  }
 
-    let active = null;
-    const markers = [], chips = [];
+  function showCard(p) {
+    document.getElementById('cName').textContent = p.nm || 'בניין';
+    document.getElementById('cH').textContent = (p.est ? '~' : '') + Math.round(p.h) + ' מ׳';
+    document.getElementById('cMeta').textContent = p.est ? 'גובה משוער לפי גודל הבניין (אין נתון גובה ב-OSM)'
+      : (p.fl ? p.fl + ' קומות · ' : '') + (p.fl && !p.nm ? 'גובה מחושב ממספר הקומות' : 'גובה מ-OpenStreetMap');
+    document.getElementById('card').hidden = false;
+  }
+  document.getElementById('cardX').addEventListener('click', () => document.getElementById('card').hidden = true);
 
-    function select(i) {
-      active = active === i ? null : i;
-      markers.forEach((m, j) => m.classList.toggle('on', j === active));
-      chips.forEach((c, j) => c.classList.toggle('on', j === active));
-      const src = map.getSource('glow');
-      if (active === null) {
-        src.setData({ type: 'FeatureCollection', features: [] });
-        map.setPaintProperty('buildings', 'fill-extrusion-color', BASE_GREY);
-        return;
-      }
-      const h = HOODS[active];
-      src.setData(circle(h.c, h.r));
-      map.setPaintProperty('glow', 'fill-color', h.color);
-      // צביעת הבניינים בתוך רדיוס השכונה (ביטוי distance – MapLibre 4.2+)
-      map.setPaintProperty('buildings', 'fill-extrusion-color', ['case',
-        ['<', ['distance', { type: 'Point', coordinates: h.c }], h.r],
-        ['interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 6], 0, shade(h.color, -0.45), 40, h.color, 150, shade(h.color, 0.5)],
-        BASE_GREY]);
-      stopOrbit();
-      map.flyTo({ center: h.c, zoom: 15.6, pitch: 64, bearing: map.getBearing() - 20, duration: 2200, essential: true });
-    }
+  // ---- סיבוב מצלמה איטי ----
+  const orbitBtn = document.getElementById('orbit');
+  function tick(t) {
+    if (!orbiting) return;
+    if (last && !map.isMoving()) map.setBearing(map.getBearing() + (t - last) * 0.004);
+    last = t; raf = requestAnimationFrame(tick);
+  }
+  function startOrbit() { orbiting = true; last = 0; orbitBtn.setAttribute('aria-pressed', 'true'); raf = requestAnimationFrame(tick); }
+  function stopOrbit() { orbiting = false; cancelAnimationFrame(raf); orbitBtn.setAttribute('aria-pressed', 'false'); }
+  orbitBtn.addEventListener('click', () => orbiting ? stopOrbit() : startOrbit());
+  ['mousedown', 'touchstart', 'wheel'].forEach(ev => map.on(ev, stopOrbit));
 
-    function shade(hex, t) {
-      const n = parseInt(hex.slice(1), 16), ch = [n >> 16, (n >> 8) & 255, n & 255];
-      return '#' + ch.map(v => Math.round(t < 0 ? v * (1 + t) : v + (255 - v) * t).toString(16).padStart(2, '0')).join('');
-    }
-
-    map.on('load', () => {
-      map.addSource('glow', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-      map.addLayer({ id: 'glow', type: 'fill', source: 'glow', paint: { 'fill-color': '#fff', 'fill-opacity': 0.12 } }, 'buildings');
-
-      const bar = document.getElementById('chips');
-      HOODS.forEach((h, i) => {
-        const el = document.createElement('div');
-        el.className = 'hood'; el.textContent = h.name; el.style.setProperty('--c', h.color);
-        el.addEventListener('click', e => { e.stopPropagation(); select(i); });
-        new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(h.c).addTo(map);
-        markers.push(el);
-
-        const chip = document.createElement('button');
-        chip.className = 'chip'; chip.style.setProperty('--c', h.color);
-        chip.innerHTML = '<i></i>' + h.name;
-        chip.addEventListener('click', () => select(i));
-        bar.appendChild(chip); chips.push(chip);
-      });
-      startOrbit();
-    });
-
-    // ---- סיבוב מצלמה איטי ----
-    let orbiting = false, raf = 0, last = 0;
-    const orbitBtn = document.getElementById('orbit');
-    function tick(t) {
-      if (!orbiting) return;
-      if (last && !map.isMoving()) map.setBearing(map.getBearing() + (t - last) * 0.004);
-      last = t; raf = requestAnimationFrame(tick);
-    }
-    function startOrbit() { orbiting = true; last = 0; orbitBtn.setAttribute('aria-pressed', 'true'); raf = requestAnimationFrame(tick); }
-    function stopOrbit() { orbiting = false; cancelAnimationFrame(raf); orbitBtn.setAttribute('aria-pressed', 'false'); }
-    orbitBtn.addEventListener('click', () => orbiting ? stopOrbit() : startOrbit());
-    map.on('mousedown', stopOrbit); map.on('touchstart', stopOrbit); map.on('wheel', stopOrbit);
-
-    // ---- מעבר 2D / 3D ----
-    const dimBtn = document.getElementById('dim');
-    dimBtn.addEventListener('click', () => {
-      const is3d = dimBtn.getAttribute('aria-pressed') === 'true';
-      dimBtn.setAttribute('aria-pressed', String(!is3d));
-      map.easeTo({ pitch: is3d ? 0 : 62, bearing: is3d ? 0 : -28, duration: 1200 });
-      map.setPaintProperty('buildings', 'fill-extrusion-height', is3d ? 0 : ['coalesce', ['get', 'render_height'], 6]);
-      if (is3d) stopOrbit();
-    });
-  </script>
+  // ---- 2D / 3D ----
+  const dimBtn = document.getElementById('dim');
+  dimBtn.addEventListener('click', () => {
+    const to2d = dimBtn.getAttribute('aria-pressed') === 'true';
+    dimBtn.setAttribute('aria-pressed', String(!to2d));
+    if (to2d) stopOrbit();
+    map.easeTo({ pitch: to2d ? 0 : 62, bearing: to2d ? 0 : -24, duration: 1200 });
+    map.setPaintProperty('bld', 'fill-extrusion-height', to2d ? 0 : ['get', 'h']);
+    map.setPaintProperty('bld', 'fill-extrusion-base', to2d ? 0 : ['get', 'mh']);
+  });
+</script>
 </body>
 </html>
